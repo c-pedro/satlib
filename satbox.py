@@ -3,10 +3,11 @@ from matplotlib.style import available
 import numpy as np
 from poliastro import constants
 from poliastro.earth import Orbit
-from poliastro.earth.sensors import min_and_max_ground_range, ground_range_diff_at_azimuth
+from poliastro.sensors import min_and_max_ground_range, ground_range_diff_at_azimuth
 from poliastro.bodies import Earth
 from poliastro.maneuver import Maneuver
-from poliastro.twobody.propagation import propagate, func_twobody
+from poliastro.twobody.propagation import propagate
+from poliastro.core.propagation import func_twobody
 from poliastro.twobody.propagation import cowell
 from poliastro.core.perturbations import J2_perturbation
 from poliastro.util import norm
@@ -217,7 +218,7 @@ class Constellation():
     #             #Save properties that are erased during propagation
     #             satID = sat.satID
     #             planeID = sat.planeID
-    #             note = sat.note 
+    #             note = sat.note
     #             task = sat.task
     #             manSched = sat.manSched
 
@@ -225,7 +226,7 @@ class Constellation():
 
     #             satProp.satID = satID
     #             satProp.planeID = planeID
-    #             satProp.note = note 
+    #             satProp.note = note
     #             satProp.task = task
     #             satProp.manSched = manSched
 
@@ -400,7 +401,7 @@ class Constellation():
         Generates schedules to take each satellite in the constellation to the
         desired RGT track. This function doesn't decide which satellites are
         given the RGT tasking.
-        
+
         Parameters
         ----------
         self: satbox.Constellation
@@ -411,7 +412,7 @@ class Constellation():
             Ground location that RGT should pass
         tSTep: ~astropy.unit.Quantity
             time step used when propagating satellite into drift orbit
-            
+
         Returns
         -------
         schedDict: Dict of satbox.ManeuverSchedules
@@ -472,9 +473,9 @@ class Constellation():
             sats2Maneuver[planeKey] = []
             driftHolder = None
             for satKey in plane.keys():
-                tDrift = plane[satKey].driftTime 
+                tDrift = plane[satKey].driftTime
                 if driftHolder is None:
-                    driftHolder = tDrift 
+                    driftHolder = tDrift
                     saveSat = satKey
                     sched = plane[satKey]
                 elif driftHolder > tDrift:
@@ -526,10 +527,10 @@ class Constellation():
             for satKey in plane.keys():
                 # if plane[satKey] == none: #No schedule
                 #     continue
-                tDrift = plane[satKey].driftTime 
+                tDrift = plane[satKey].driftTime
                 # passType = plane[satKey].passType
                 if driftHolder is None: #First satellite in plane is default
-                    driftHolder = tDrift 
+                    driftHolder = tDrift
                     saveSat = satKey
                     sched = plane[satKey]
 
@@ -555,7 +556,7 @@ class Constellation():
             passType = scheds[f'{planeKey} {saveSat[0]}'].passType
 
             #Remove satellite already chosen
-            for popSat in saveSat: 
+            for popSat in saveSat:
                 plane.pop(popSat)
 
             for satKey in plane.keys():
@@ -564,7 +565,7 @@ class Constellation():
                 backupChosen = 0 #Keep track of backup schedule chosen
 
                 #Same crossing type means you have to choose other type of crossing
-                if plane[satKey].passType == passType: 
+                if plane[satKey].passType == passType:
                     schedHolder = plane[satKey].scheduleBackup
                     backupChosen = 1
                 else:
@@ -575,7 +576,7 @@ class Constellation():
                 tDrift = schedHolder.driftTime
                 if driftHolder is None: #First satellite in plane is default
                     driftHolder = tDrift
-                    saveSat = satKey 
+                    saveSat = satKey
                     sched = schedHolder
                     backupTracker = backupChosen #Keep track if backup is chosen
                 elif driftHolder > tDrift: #Replace with better satellite
@@ -610,11 +611,11 @@ class Constellation():
                 satSchedSwitch.maneuverSchedule = sched
                 satSchedSwitch.maneuverSchedule.backupUsed = 1 #Make sure we know back up is activated
 
-                
+
         return sats2Maneuver, driftTimes, scheds
 
 
-    def generate_czml_file(self, prop_duration, sample_points, 
+    def generate_czml_file(self, prop_duration, sample_points,
                             fname=None, satellites=None, objects=None, L_avail_ISL=None,L_poly_ISL=None, L_avail_GS=None, L_poly_GS=None, GS_pos=None, alt=None, conicSensorAngle=None, GS=False, scene3d=True, specificSats=False, show_polyline_ISL=False, show_polyline_GS=False, show_conicSensor=False, create_file=False):
         """
         Generates CZML file for the constellation for plotting
@@ -665,8 +666,8 @@ class Constellation():
         #adding isl
         if show_polyline_ISL:
             if (satellites==None) or (L_avail_ISL==None) or (L_poly_ISL==None):
-                return "You have chosen to visualize the intersatellite communication links between satellites. Please make sure the following paramenters have been inputted: satellites, L_avail_ISL, and L_poly_ISL"    
-            else: 
+                return "You have chosen to visualize the intersatellite communication links between satellites. Please make sure the following paramenters have been inputted: satellites, L_avail_ISL, and L_poly_ISL"
+            else:
                 r1=[]
                 r2=[]
                 for i in satellites:
@@ -680,7 +681,7 @@ class Constellation():
                                             true_time_intervals=L_avail_ISL[i],
                                             time_intervals=L_poly_ISL[i],
                                             line_width=2)
-        
+
         #adding conicSenor
         if show_conicSensor:
             if (alt==None) or (conicSensorAngle==None):
@@ -726,10 +727,10 @@ class Constellation():
                                             time_intervals=L_poly_GS[i],
                                             line_color=[10, 245, 25, 255],
                                             line_width=2)
-                
+
         if create_file:
             if (fname==None):
-                return "You have chosen to create a czml file. Please make sure the fname parameter has been inputted"     
+                return "You have chosen to create a czml file. Please make sure the fname parameter has been inputted"
             else:
                 doc = [str(x) for x in extractor.packets]
                 toPrint = ','.join(doc)
@@ -741,7 +742,7 @@ class Constellation():
                 f = open(fileDir, "w")
                 f.write(toPrint)
                 f.close()
-            
+
         else:
             doc = [str(x) for x in extractor.packets]
             toPrint = ','.join(doc)
@@ -802,7 +803,7 @@ class SimConstellation():
         verbose: Bool
             Prints out debug statements if True
         """
-        assert isinstance(constellation, Constellation), ('constellation argument must' 
+        assert isinstance(constellation, Constellation), ('constellation argument must'
                                                   ' be a Constellation object')
         assert isinstance(t2propagate, astropy.units.quantity.Quantity), ('t2propagate'
                                                  'must be an astropy.units.quantity.Quantity')
@@ -873,13 +874,13 @@ class SimConstellation():
 
     def get_propagated_sats(self):
         """
-        Get satellites 
+        Get satellites
         """
         if self.propagated == 0:
             print("Run SimConstellation.propagate() first to propagate satellites")
             return
 
-        constellation = self.constellation  
+        constellation = self.constellation
         sats = constellation.get_sats()
         return sats
 
@@ -1130,7 +1131,7 @@ class Plane():
         """
         self.sats.append(sat)
 
-    
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -1194,13 +1195,13 @@ class Satellite(Orbit):
     def gen_sched_rgt_acquisition(self, groundLoc, k_r=15, k_d=1):
         """
         Generates a burn schedule that takes a satellite in a drift orbit into
-        a desired RGT orbit over the ground location of interest. 
+        a desired RGT orbit over the ground location of interest.
 
         **Schedule is generated using current satellite (self) epoch**
 
         Parameters
         ----------
-        groundLoc: satbox.GroundLoc  
+        groundLoc: satbox.GroundLoc
             This is the ground location that you want to get a pass from
         k_r: int
             Number of revolutions until repeat ground track
@@ -1212,7 +1213,7 @@ class Satellite(Orbit):
         sched: satbox.ManeuverSchedule
             Hohmann transfer schedule to attain RGT orbit
         """
-        assert isinstance(groundLoc, GroundLoc), ('groundLoc argument must' 
+        assert isinstance(groundLoc, GroundLoc), ('groundLoc argument must'
                                                   ' be a satbox.GroundLoc object')
 
 
@@ -1297,7 +1298,7 @@ class Satellite(Orbit):
         deltaL_hohD = om.nodal_period_displacement(pnRGTD, rgtDesiredD.a, rgtDesiredD.ecc, rgtDesiredD.inc, hoh_aD)
         deltaL_drift = om.nodal_period_displacement(pnRGT, rgtDesired.a, rgtDesired.ecc, rgtDesired.inc, self.a)
         deltaL_driftD = om.nodal_period_displacement(pnRGTD, rgtDesiredD.a, rgtDesiredD.ecc, rgtDesiredD.inc, self.a)
-        
+
         # Get drift rate of drift orbit and hohmann orbit
         deltaLDriftDot = deltaL_drift / pnDrift
         deltaLDriftDotD = deltaL_driftD / pnDrift
@@ -1421,46 +1422,46 @@ class Satellite(Orbit):
     def get_rgt(self, groundLoc, days=3 , tInitSim=None, task=None, k_r=15, k_d=1,
                                  refVernalEquinox=astropy.time.Time("2022-03-22T0:00:00", format = 'isot', scale = 'utc')):
         """
-        Given an orbit and ground site, gets the desired repeat ground track orbit 
+        Given an orbit and ground site, gets the desired repeat ground track orbit
         Loosely based on Legge's thesis section 3.1.2
 
         Parameters
         ----------
-        groundLoc: satbox.GroundLoc  
+        groundLoc: satbox.GroundLoc
             This is the ground location that you want to get a pass from
-        days int: int 
+        days int: int
             Amount of days ahead for the scheduler to plan for
         tInitSim: ~astropy.time.Time
             Time to initialize planner
-        task: string 
+        task: string
             The assigned task for the desired satellite. Options: 'Image', 'ISL', 'Downlink'
         k_r: int
             Number of revolutions until repeat ground track
         k_d: int
             Number of days to to repeat ground track
-        refVernalEquinox: ~astropy.time.Time 
+        refVernalEquinox: ~astropy.time.Time
             Date of vernal equinox. Default is for 2021
 
         Returns
         ----------
-        rgtOrbits: (array of satbox.Satellite objects): 
+        rgtOrbits: (array of satbox.Satellite objects):
             Orbit of satellite at ground pass (potential position aka ghost position)
         """
-        assert isinstance(groundLoc, GroundLoc), ('groundLoc argument must' 
+        assert isinstance(groundLoc, GroundLoc), ('groundLoc argument must'
                                                   ' be a satbox.GroundLoc object')
-        assert isinstance(days, int), ('days argument must' 
+        assert isinstance(days, int), ('days argument must'
                                                   ' be an integer')
 
         if tInitSim is None:
             tInit = self.epoch
-            satInit = self  
+            satInit = self
         else:
             assert isinstance(tInitSim, astropy.units.quantity.Quantity), ('tInitSim '
                                                  'must be an astropy.units.quantity.Quantity')
             tInit = tInitSim
             satInit = self.propagate(tInitSim)
 
-        
+
         tInitMJDRaw = tInit.mjd
         tInitMJD = int(tInitMJDRaw)
 
@@ -1468,7 +1469,7 @@ class Satellite(Orbit):
         days2InvestigateMJD = list(tInitMJD + dayArray) #Which days to plan over
         days = [Time(dayMJD, format='mjd', scale='utc')
                             for dayMJD in days2InvestigateMJD]
-        
+
         # #Get geocentric coordinates of ground station
         gsGeocentric = groundLoc.loc.to_geocentric()
 
@@ -1485,7 +1486,7 @@ class Satellite(Orbit):
         # #Using geocentric latitude
         # asinGeocentric = np.tan(gsLatGeocentric) / np.tan(satInit.inc)
         # delLamGeocentric = np.arcsin(asinGeocentric)
-        
+
         # #Using reduced latitude
         # asinReduced = np.tan(beta) / np.tan(satInit.inc)
         # delLamReduced = np.arcsin(asinReduced)
@@ -1522,7 +1523,7 @@ class Satellite(Orbit):
         delDDates = [day - refVernalEquinox for day in days] #Gets difference in time from vernal equinox
         delDDateDecimalYrList = [delDates.to_value('year') for delDates in delDDates] #Gets decimal year value of date difference
         delDDateDecimalYr = np.array(delDDateDecimalYrList)
-    
+
         #Get solar time values for ascending and descending pass
         theta_GMT_raw = theta_GMST - 2*np.pi * delDDateDecimalYr * u.rad + np.pi * u.rad
 
@@ -1572,50 +1573,50 @@ class Satellite(Orbit):
     # def get_rgt(self, groundLoc, days=7 , tInitSim=None, task=None, k_r=15, k_d=1,
     #                              refVernalEquinox=astropy.time.Time("2021-03-20T0:00:00", format = 'isot', scale = 'utc')):
     #     """
-    #     Given an orbit and ground site, gets the desired repeat ground track orbit 
+    #     Given an orbit and ground site, gets the desired repeat ground track orbit
     #     Loosely based on Legge's thesis section 3.1.2
 
     #     Parameters
     #     ----------
-    #     groundLoc: satbox.GroundLoc  
+    #     groundLoc: satbox.GroundLoc
     #         This is the ground location that you want to get a pass from
-    #     days int: int 
+    #     days int: int
     #         Amount of days ahead for the scheduler to plan for
     #     tInitSim: ~astropy.time.Time
     #         Time to initialize planner
-    #     task: string 
+    #     task: string
     #         The assigned task for the desired satellite. Options: 'Image', 'ISL', 'Downlink'
     #     k_r: int
     #         Number of revolutions until repeat ground track
     #     k_d: int
     #         Number of days to to repeat ground track
-    #     refVernalEquinox: ~astropy.time.Time 
+    #     refVernalEquinox: ~astropy.time.Time
     #         Date of vernal equinox. Default is for 2021
 
     #     Returns
     #     ----------
-    #     rgtOrbits: (array of satbox.Satellite objects): 
+    #     rgtOrbits: (array of satbox.Satellite objects):
     #         Orbit of satellite at ground pass (potential position aka ghost position)
 
     #     Todo:
     #         Account for RAAN drift due to J2 perturbation
     #     """
 
-    #     assert isinstance(groundLoc, GroundLoc), ('groundLoc argument must' 
+    #     assert isinstance(groundLoc, GroundLoc), ('groundLoc argument must'
     #                                               ' be a satbox.GroundLoc object')
-    #     assert isinstance(days, int), ('days argument must' 
+    #     assert isinstance(days, int), ('days argument must'
     #                                               ' be an integer')
 
     #     if tInitSim is None:
     #         tInit = self.epoch
-    #         satInit = self  
+    #         satInit = self
     #     else:
     #         assert isinstance(tInitSim, astropy.units.quantity.Quantity), ('tInitSim '
     #                                              'must be an astropy.units.quantity.Quantity')
     #         tInit = tInitSim
     #         satInit = self.propagate(tInitSim)
 
-        
+
     #     tInitMJDRaw = tInit.mjd
     #     tInitMJD = int(tInitMJDRaw)
 
@@ -1623,7 +1624,7 @@ class Satellite(Orbit):
     #     days2InvestigateMJD = list(tInitMJD + dayArray) #Which days to plan over
     #     days = [Time(dayMJD, format='mjd', scale='utc')
     #                         for dayMJD in days2InvestigateMJD]
-        
+
     #     # #Get geocentric coordinates of ground station
     #     # gsGeocentric = groundLoc.loc.to_geocentric()
 
@@ -1659,7 +1660,7 @@ class Satellite(Orbit):
     #     delDDates = [day - refVernalEquinox for day in days] #Gets difference in time from vernal equinox
     #     delDDateDecimalYrList = [delDates.to_value('year') for delDates in delDDates] #Gets decimal year value of date difference
     #     delDDateDecimalYr = np.array(delDDateDecimalYrList)
-    
+
     #     #Get solar time values for ascending and descending pass
     #     theta_GMT_a_raw = theta_GMST_a - 2*np.pi * delDDateDecimalYr * u.rad + np.pi * u.rad
     #     theta_GMT_d_raw = theta_GMST_d - 2*np.pi * delDDateDecimalYr * u.rad + np.pi * u.rad
@@ -1669,7 +1670,7 @@ class Satellite(Orbit):
 
     #     angleToHrs_a = astropy.coordinates.Angle(theta_GMT_a).hour
     #     angleToHrs_d = astropy.coordinates.Angle(theta_GMT_d).hour
-        
+
     #     tPass_a = []
     #     tPass_d = []
     #     for d_idx, day in enumerate(days):
@@ -1687,14 +1688,14 @@ class Satellite(Orbit):
     #     for schItm in scheduleItms_a:
     #         schItm.note = note_a
     #         schItm.passType = 'a'
-        
+
     #     scheduleItms_d = [PointingObject(tPass) for tPass in tPass_d]
     #     for schItm in scheduleItms_d:
     #         schItm.note = note_d
     #         schItm.passType = 'd'
-        
+
     #     scheduleItms = scheduleItms_a + scheduleItms_d
-        
+
     #     rgtOrbits = []
 
     #     rgt_r, rgt_alt = om.getRGTOrbit(k_r, k_d, satInit.ecc, satInit.inc)
@@ -1707,13 +1708,13 @@ class Satellite(Orbit):
     #         elif sch.passType == 'd': #Descending argument of latitude
     #             omega = anoms[1]
     #             raan = raans[1]
-            
+
     #         #Get desired satellite that will make pass of ground location
     #         ghostSatFuture = Satellite.circular(Earth, alt = rgt_alt,
     #              inc = satInit.inc, raan = raan, arglat = omega, epoch = sch.time)
     #         ghostSatFuture.satID = self.satID #tag with satID
     #         ghostSatFuture.note = sch.passType #Tag with ascending or descending
-            
+
     #         ##Tag satellite with maneuver number
     #         ghostSatFuture.manID = idx
 
@@ -1722,10 +1723,10 @@ class Satellite(Orbit):
     #         ghostSatFuture.satID = self.planeID
 
     #         #Include RGT Constant as an attribute
-    #         # ghostSatFuture.rgtConstant = k_r * raan + k_d * omega 
+    #         # ghostSatFuture.rgtConstant = k_r * raan + k_d * omega
     #         # ghostSatFuture.equatorCrossings = wrapAngles
     #         rgtOrbits.append(ghostSatFuture)
-    
+
 
     #     return rgtOrbits
 
@@ -1733,7 +1734,7 @@ class Satellite(Orbit):
         """
         Generates a schedule to take a satellite in GOM to RGT over the desired
         ground location (gs)
-        
+
         Parameters
         ----------
         self: satbox.Satellite
@@ -1746,7 +1747,7 @@ class Satellite(Orbit):
             Time step for propagation
         k_r: int
             Number of revolutions until repeat ground track
-        k_d: int 
+        k_d: int
             Number of days to repeat ground track
         verbose: bool
             Print statements if true
@@ -1763,7 +1764,7 @@ class Satellite(Orbit):
             r_drift = self.a + altChange
         elif self.alt < alt_out:
             r_drift = self.a - altChange
-        
+
         # Create drift satellite
         sched = ManeuverSchedule()
         sched.gen_hohmann_schedule(self, r_drift)
@@ -1774,22 +1775,22 @@ class Satellite(Orbit):
 
         satDrift = self
         satDrift.add_man_schedule(sched)
-        
+
         #Get Hohmann Time
         hohmannStartTime = sched.schedule[0].time
         hohmannStopTime = sched.schedule[1].time
         hohmannTime = hohmannStopTime - hohmannStartTime
-        
+
         hohmannPropagateTime = hohmannTime + tStep #add tStep buffer
-        
+
         #Propagate to drift orbit
         satDriftSim = SimSatellite(satDrift, hohmannPropagateTime.sec * u.s, tStep, verbose=verbose)
         satDriftSim.propagate()
-        
+
         driftSat = satDriftSim.satSegments[2]
         rgtAqSched = driftSat.gen_sched_rgt_acquisition(gs)
         driftSat.add_man_schedule(rgtAqSched)
-        
+
         for s in rgtAqSched.schedule:
             sched.add_maneuver(s)
 
@@ -1818,16 +1819,16 @@ class Satellite(Orbit):
         sched.scheduleBackup = schedBackup
 
         return sched
-        
+
     def __desired_raan_from_pass_time(self, tPass, groundLoc):
         """        Gets the desired orbit specifications from a desired pass time and groundstation
         Based on equations in section 3.1.2 in Legge's thesis (2014)
 
         Parameters
         ----------
-            tPass: ~astropy.time.Time 
+            tPass: ~astropy.time.Time
                 Desired time of pass. Local UTC time preferred
-            GroundLoc: satbox.GroundLoc 
+            GroundLoc: satbox.GroundLoc
                 GroundLoc class. This is the ground location that you want to get a pass from
 
         Returns
@@ -1837,7 +1838,7 @@ class Satellite(Orbit):
 
             Anoms [List]: 2 element list where the elements corresponds to true Anomalies (circular orbit)
                             of the ascending case and descending case respectively"""
-    
+
          ## Check if astropy class. Make astropy class if not
         if not isinstance(groundLoc.lat, astropy.units.quantity.Quantity):
             groundLoc.lat = groundLoc.lat * u.deg
@@ -1847,7 +1848,7 @@ class Satellite(Orbit):
 #             i = i * u.rad
         tPass.location = groundLoc.loc #Make sure location is tied to time object
         theta_GMST = tPass.sidereal_time('mean', 'greenwich') #Greenwich mean sidereal time
-        
+
         # #Get geocentric coordinates of ground station
         gsGeocentric = groundLoc.loc.to_geocentric()
 
@@ -1894,7 +1895,7 @@ class Satellite(Orbit):
             ca_a = np.arctan2(n1a_X_n2_norm, n1_ascendingDn2) #Central angle ascending
             ca_d = np.arctan2(n1d_X_n2_norm, n1_descendingDn2) #Central angle descending
         elif groundLoc.lat < 0 * u.deg and groundLoc.lat > -90 * u.deg: #Southern Hemisphere case
-            ca_a = 2 * np.pi * u.rad - np.arctan2(n1a_X_n2_norm, n1_ascendingDn2) 
+            ca_a = 2 * np.pi * u.rad - np.arctan2(n1a_X_n2_norm, n1_ascendingDn2)
             ca_d = 2 * np.pi * u.rad - np.arctan2(n1d_X_n2_norm, n1_descendingDn2)
         elif groundLoc.lat == 0 * u.deg: #Equatorial case
             ca_a = 0 * u.rad
@@ -1904,7 +1905,7 @@ class Satellite(Orbit):
             ca_d = 3 * np.pi / 2 * u.rad
         else:
             print("non valid latitude")
-            
+
         raans = [raan_ascending, raan_descending]
         Anoms = [ca_a, ca_d]
 
@@ -1939,7 +1940,7 @@ class SimSatellite():
             Prints out debug statements if True
         """
 
-        assert isinstance(satellite, Satellite), ('satellite argument must' 
+        assert isinstance(satellite, Satellite), ('satellite argument must'
                                                   ' be a Satellite object')
         assert isinstance(t2propagate, astropy.units.quantity.Quantity), ('t2propagate'
                                                  'must be an astropy.units.quantity.Quantity')
@@ -1968,21 +1969,21 @@ class SimSatellite():
 
 
         #TimeDelta objects used to propagate satellite
-        self.timeDeltas = TimeDelta(np.arange(0, 
+        self.timeDeltas = TimeDelta(np.arange(0,
                                               t2propagate.to(u.s).value,
                                               tStep.to(u.s).value) * u.s)
 
         #Preserve original attributes
         self.satID = satellite.satID
         self.planeID = satellite.planeID
-        self.note = satellite.note 
+        self.note = satellite.note
         self.task = satellite.task
         self.propagated = 0 #check if propagated
         self.epoch = satellite.epoch
         self.ecc = satellite.ecc
         self.inc = satellite.inc
         self.a = satellite.a
-        self.alt = satellite.alt 
+        self.alt = satellite.alt
 
 
         #Times in UTC (default)
@@ -2024,7 +2025,7 @@ class SimSatellite():
         #Save properties that are erased during propagation
         satID = self.initSat.satID
         planeID = self.initSat.planeID
-        note = self.initSat.note 
+        note = self.initSat.note
         task = self.initSat.task
         manSched = self.initSat.maneuverSchedule
 
@@ -2032,7 +2033,7 @@ class SimSatellite():
 
 
         #If not maneuver schedule
-        if (self.maneuverSchedule is None) or skip_sched==True: 
+        if (self.maneuverSchedule is None) or skip_sched==True:
             if method == "J2":
                 coords = propagate(
                     self.initSat,
@@ -2072,17 +2073,17 @@ class SimSatellite():
             for manIdx, man in enumerate(schedule):
                 assert man.time >= currentSat.epoch, "maneuver time before satellite epoch"
 
-                #Poliastro maneuver object    
+                #Poliastro maneuver object
                 poliMan = Maneuver.impulse(man.deltaVVec)
 
                 deltaVUse = utils.get_norm(man.deltaVVec)
-                
+
                 deltaVUsage += deltaVUse
 
                 segmentTimeLen = man.time - currentSat.epoch
 
                 if segmentTimeLen.to(u.s).value == 0: #Burn initialized at same time as sim start
-                    sat_i = currentSat 
+                    sat_i = currentSat
 
                     # sat_f = sat_i.apply_maneuver(poliMan)
                     # t2propagateAtEnd = self.tStep
@@ -2113,10 +2114,10 @@ class SimSatellite():
                         sat_i = currentSat.propagate(segmentTimeLen)
 
                     timesSegment = currentSat.epoch + tDeltas
-                    satECISeg = GCRS(coords.x, 
-                                          coords.y, 
-                                          coords.z, 
-                                          representation_type="cartesian", 
+                    satECISeg = GCRS(coords.x,
+                                          coords.y,
+                                          coords.z,
+                                          representation_type="cartesian",
                                           obstime = timesSegment)
                     satECISkySeg = SkyCoord(satECISeg)
                     satECEFSeg = satECISkySeg.transform_to(ITRS)
@@ -2139,7 +2140,7 @@ class SimSatellite():
                 if method == "J2":
                     sat_f = sat_maneuvered.propagate(t2propagateAtEnd,
                                     method=cowell,
-                                    f=f )    
+                                    f=f )
                 else:
                     sat_f = sat_maneuvered.propagate(t2propagateAtEnd)
 
@@ -2147,7 +2148,7 @@ class SimSatellite():
 
                 currentSat.satID = satID
                 currentSat.planeID = planeID
-                currentSat.note = note 
+                currentSat.note = note
                 currentSat.task = task
                 currentSat.maneuverSchedule = manSched
 
@@ -2162,7 +2163,7 @@ class SimSatellite():
                 tDeltas = TimeDelta(np.arange(0,
                                           timeLeft.to(u.s).value - self.tStep.to(u.s).value/10, #Subtract a bit to avoid numerical errors
                                           self.tStep.to(u.s).value ) * u.s)
-                
+
 
                 if method == "J2":
                     coords = propagate(
@@ -2181,10 +2182,10 @@ class SimSatellite():
                     sat_i = currentSat.propagate(timeLeft)
 
                 timesSegment = currentSat.epoch + tDeltas
-                satECISeg = GCRS(coords.x, 
-                                      coords.y, 
-                                      coords.z, 
-                                      representation_type="cartesian", 
+                satECISeg = GCRS(coords.x,
+                                      coords.y,
+                                      coords.z,
+                                      representation_type="cartesian",
                                       obstime = timesSegment)
                 satECISkySeg = SkyCoord(satECISeg)
                 satECEFSeg = satECISkySeg.transform_to(ITRS)
@@ -2204,10 +2205,10 @@ class SimSatellite():
             else:
                 coordsAll = self.cartesianRepSegments[0]
             timesAll = np.concatenate([*self.timeSegments], axis=None)
-            satECI = GCRS(coordsAll.x, 
-                              coordsAll.y, 
-                              coordsAll.z, 
-                              representation_type="cartesian", 
+            satECI = GCRS(coordsAll.x,
+                              coordsAll.y,
+                              coordsAll.z,
+                              representation_type="cartesian",
                               obstime = timesAll)
         satECISky = SkyCoord(satECI)
         satECEF = satECISky.transform_to(ITRS)
@@ -2297,7 +2298,7 @@ class ManeuverObject():
         assert isinstance(time, astropy.time.core.Time), ('time must be an'
                                                          'astropy.time.core.Time object')
         assert len(deltaV) == 3, 'deltaV must be a 3 vector'
-        assert isinstance(deltaV, astropy.units.quantity.Quantity), ('deltaV' 
+        assert isinstance(deltaV, astropy.units.quantity.Quantity), ('deltaV'
                                          ' must be astropy.units.quantity.Quantity')
 
         self.time = time
@@ -2334,14 +2335,14 @@ class ManeuverSchedule():
     def gen_hohmann_schedule(self, orb, r_f):
         """
         Generate a schedule for a Hohmann transfer
-        
+
         Parameters
         ----------
         orb: ~satbox.Satellite
             Satellite initializing object
         r_f: ~astropy.unit.Quantity
             Desired final orbital radius at end of Hohmann transfer
-        
+
         """
         #Check if it's a forward or backward propulsive hohmann
         if orb.a <= r_f:
@@ -2350,13 +2351,13 @@ class ManeuverSchedule():
             prop_dir = -1 #Slow down satellite to reduce altitude
         else:
             assert "orbital radius is neither greater than or less than final radius"
-        
+
         #Total deltaV to move from circular to elliptical orbit
         delv1Tot = om.circ2elip_Hohmann(orb.a, r_f)
 
         #Get unit vector
         delv1_dir = utils.get_unit_vec(orb.v) * prop_dir
-        
+
         #Get deltaV in inertial frame
         delv1 = delv1Tot * delv1_dir
 
@@ -2367,7 +2368,7 @@ class ManeuverSchedule():
 
         #Get time of hohmann transfer
         t_hohmann = om.t_Hohmann(orb.a, r_f)
-        
+
         #Add to burn scheduler
 
 
@@ -2380,11 +2381,11 @@ class ManeuverSchedule():
 
     def gen_intersect_sched(self, orb_i, orb_tgt, method="J2"):
         """
-        Calculate the schedule needed to intersect a desired orbit in the same plane. 
+        Calculate the schedule needed to intersect a desired orbit in the same plane.
         For this particular research case, orb_i is usually the drift (intermediate)
-        orbit that the satellite hangs out in before conducting a Hohmann 
+        orbit that the satellite hangs out in before conducting a Hohmann
         transfer to enter the RGT orbit.
-        
+
         Parameters
         ----------
         orb_i: ~satbox.Satellite
@@ -2393,7 +2394,7 @@ class ManeuverSchedule():
             Desired orbit in any state (epoch)
         method: string
             Method of propagation. Currently only "J2" supported
-        
+
         """
         #Propagate RGT orbit to same epoch as orb_i
         if method=="J2":
@@ -2407,20 +2408,20 @@ class ManeuverSchedule():
             orb_tgt_i = orb_tgt.propagate(orb_i.epoch, method=cowell, f=f)
         else:
             orb_tgt_i = orb_tgt.propagate(orb_i.epoch)
-        
+
         #Get initial phase angle
-        #Defined from the target to the chaser. 
+        #Defined from the target to the chaser.
         #Positive direction in target direction of motion
         v_i = orb_i.arglat - orb_tgt_i.arglat
         if v_i < (-180*u.deg): #Wrap angle around
             v_i = v_i % (360 * u.deg)
         elif v_i > (180*u.deg):
             v_i = v_i - (360 * u.deg)
-        
+
         a_int = orb_i.a
         a_tgt = orb_tgt_i.a
-        t_trans, delVTot, a_trans, t_wait = om.coplanar_phase_different_orbs(v_i, 
-                                                                          a_int, 
+        t_trans, delVTot, a_trans, t_wait = om.coplanar_phase_different_orbs(v_i,
+                                                                          a_int,
                                                                           a_tgt)
         #Propagate orb_i to time of first burn
         if method=="J2":
@@ -2453,7 +2454,7 @@ class ManeuverSchedule():
 
 class PointingObject():
     def __init__(self, time, note=None, passType=None,direction=None, action=None):
-        self.time = time 
+        self.time = time
         self.note = note
         self.direction = direction
         self.action = action
@@ -2603,7 +2604,7 @@ class DataAccessSat():
         ----------
         simSat: ~satbox.SimSatellite
             SimSatellite object that has been propagated
-        groundLoc: ~satbox.GroundLoc 
+        groundLoc: ~satbox.GroundLoc
             Ground Location object
         """
         if simSat.propagated == 0:
@@ -2626,12 +2627,12 @@ class DataAccessSat():
 
     def calc_access(self, constraint_type, constraint_angle):
         """
-        Calculate access between a satellite and a ground station given a 
+        Calculate access between a satellite and a ground station given a
         constraint type and constraint angle
 
         Also includes a daylight lighting restraint output
 
-        Warning: Nadir constraint angle is the half-angle associated with the FOV, so a 
+        Warning: Nadir constraint angle is the half-angle associated with the FOV, so a
         camera with 90 deg of FOV, would be equivalent to a constraint_angle of 45 deg
 
         Parameters:
@@ -2720,7 +2721,7 @@ class DataAccessSat():
 
         #Remove propagated data to save space
         self.sat = self.sat.initSat
-        
+
     def plot_tombstone(self):
         """
         plots tombstone plot
@@ -2735,7 +2736,7 @@ class DataAccessSat():
         allTimes = self.sat.timesAll
         if isinstance(allTimes, np.ndarray):
             timePlot = [t.datetime for t in allTimes]
-        else: 
+        else:
             timePlot = self.sat.timesAll.datetime
 
         fig, ax = plt.subplots()
@@ -2841,14 +2842,14 @@ class DataAccessConstellation():
         #Extract IDs for easy calling
         # self.groundLocID = groundLoc.groundID
         # self.groundIdentifier = groundLoc.identifier
-    
+
 
     def calc_access(self, constraint_type, constraint_angle):
         """
-        Calculate access between each satellite in a constellation and a ground station given a 
+        Calculate access between each satellite in a constellation and a ground station given a
         constraint type and constraint angle
 
-        Warning: Nadir constraint angle is the half-angle associated with the FOV, so a 
+        Warning: Nadir constraint angle is the half-angle associated with the FOV, so a
         camera with 90 deg of FOV, would be equivalent to a constraint_angle of 45 deg
 
         Parameters:
@@ -2906,7 +2907,7 @@ class DataAccessConstellation():
         allTimes = self.allAccessData[0].sat.timesAll
         if isinstance(allTimes, np.ndarray):
             timePlot = [t.datetime for t in allTimes]
-        else: 
+        else:
             timePlot = allTimes.datetime
 
         fig, ax = plt.subplots()
@@ -2939,7 +2940,7 @@ class DataAccessConstellation():
             allTimes = self.allAccessData[accessIdx].sat.timesAll
             if isinstance(allTimes, np.ndarray):
                 timePlot = [t.datetime for t in allTimes]
-            else: 
+            else:
                 timePlot = allTimes.datetime
             ax = axs[accessIdx]
             lab = f'Sat: {access.satID} | GS: {access.groundLocID}'
@@ -2992,7 +2993,7 @@ class DataAccessConstellation():
                 allTimes = self.allAccessData[accessIdx].sat.timesAll
                 if isinstance(allTimes, np.ndarray):
                     timePlot = [t.datetime for t in allTimes]
-                else: 
+                else:
                     timePlot = allTimes.datetime
 
                 if numTot == 1:
@@ -3019,7 +3020,7 @@ class DataAccessConstellation():
     def get_temp_resolution(self, gLocs, sats='all', length_threshold=0*u.s):
         """
         Gets the temporal resolution (observation cadence) of select sats
-        
+
         Parameters
         ----------
         sats: [list]
@@ -3045,7 +3046,7 @@ class DataAccessConstellation():
             for accessIdx, access in enumerate(self.allAccessData):
 
 
-            
+
                 #Find applicable intervals
 
                 newArray = [q.to(u.s).value for q in access.accessIntervalLengths]
@@ -3059,7 +3060,7 @@ class DataAccessConstellation():
 
                 allIntervals.extend(goodIntervals)
 
-                # intDiffs = np.diff(access.accessIntervals, axis=0)    
+                # intDiffs = np.diff(access.accessIntervals, axis=0)
         else:
             for accessIdx, access in enumerate(self.allAccessData):
                 if access.satID in sats:
